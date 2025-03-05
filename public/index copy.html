@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spicy SpotifyClient Web</title>
+    <link rel="stylesheet" href="static/css/index.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.2/jquery.min.js"
+      integrity="sha512-tWHlutFnuG0C6nQRlpvrEhE4QpkG1nn2MOUMWmUeRePl4e3Aki0VB6W1v3oLjFtd0hVOtRQ9PHpSfN6u6/QXkQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+
+    <script src="./static/Vibrant.js"></script>
+  </head>
+  <body>
+    <div class="background"></div>
+    <div id="unAuthed">You are not authed!</div>
+    <div class="lyricsBox">
+      <div class="lyrics"></div>
+    </div>
+    <div class="mainBox">
+      <div class="songBox">
+        <div class="coverContainer">
+          <img src="http://localhost/flore.jpg" class="cover" crossorigin="anonymous" />
+          <img src="http://localhost/flore.jpg" class="coverMask" crossorigin="anonymous">
+        </div>
+        <div class="metadata">
+          <h1 class="trackName">Flores Pa Tu Pelo</h1>
+          <h1 class="artists">Dellafuente</h1>
+        </div>
+      </div>
+      <div class="trackProgress">
+        <h1 class="durationProgress">0:00</h1>
+        <div class="progressBarContainer">
+          <div class="progressBar"></div>
+        </div>
+        <button class="duration">3:21</button>
+      </div>
+    </div>
+
+    <script>
+      //Todo: do a crazy ass animation when the song changes
+      var currentSong = ""
+      var colorPallete
+
+      setInterval(() => {
+        $.get("/api/playerState", async function (result) {
+          if (result == "No authorization found") {
+            document.getElementById("unAuthed").style.display = "block"
+            return
+          }
+          document.getElementById("unAuthed").style.display = "none"
+          if (currentSong != result.item.album.id) {
+            console.log("Song changed!")
+
+            currentSong = result.item.album.id
+            $(".trackName").html(result.item.name)
+
+            var artists = ""
+            for (const artist of result.item.artists) {
+              if (artists == "") {
+                artists = artist.name
+                continue
+              }
+              artists = artists + ", " + artist.name
+            }
+            $(".artists").html(artists)
+            console.log(result.item.album.images[0].url)
+            const canva = document.getElementsByClassName("cover")[0]
+            canva.src = result.item.album.images[0].url
+            document.getElementsByClassName("coverMask")[0].src = result.item.album.images[0].url
+            var found = false
+            for (const artist in result.item.artists) {
+              if (found) {
+                break
+              }
+              console.log(found)
+              const r = await $.get(`/api/getArtistBanner?ArtistURI=${result.item.artists[artist].uri}&TrackURI=${result.item.uri}`)
+
+              console.log("AAAAAAAAA", r, result.item.artists[artist].uri)
+
+              if (r != "Artist doesn't have a banner") {
+                found = true
+                console.log("SEXO", r)
+                document.getElementsByClassName("background")[0].style.backgroundImage = `url(${r})`
+                break
+              }
+              if (artist == result.item.artists.length-1) {
+                  console.log("NO BANNER FOUND XD")
+                  continue
+              }
+
+              console.log(result.item.artists[artist].name, "didn't had a banner. checking for", result.item.artists[Number(artist)+1].name)
+
+            }
+            
+            if (canva.complete) {
+              const vibrant = new Vibrant(canva, 32, 1)
+              const swatches = vibrant.swatches()
+
+              const songBox = document.getElementsByClassName("songBox")[0]
+              songBox.style.backgroundColor = `rgba(${swatches["DarkMuted"].getRgb()}, 0.8)`
+              songBox.style.boxShadow = `${swatches["DarkMuted"].getHex()} 0px 0px 20px 3px`
+
+
+              const trackProgress = document.getElementsByClassName("trackProgress")[0] 
+              trackProgress.style.backgroundColor = `rgba(${swatches["DarkMuted"].getRgb()}, 0.8)`
+              trackProgress.style.boxShadow = `${swatches["DarkMuted"].getHex()} 0px 0px 20px 3px`
+              
+              document.getElementsByClassName("progressBar")[0].style.backgroundColor = swatches["Vibrant"] ? swatches["Vibrant"].getHex() : swatches["LightVibrant"].getHex()
+
+              document.getElementsByClassName("metadata")[0].style.color = swatches["LightVibrant"] ? swatches["LightVibrant"].getHex() : swatches["Vibrant"].getHex()
+            } else {
+              canva.addEventListener("load", function () {
+                const vibrant = new Vibrant(canva, 32, 1)
+                const swatches = vibrant.swatches()
+
+                console.log("Color delayed")
+                const songBox = document.getElementsByClassName("songBox")[0]
+                songBox.style.backgroundColor = `rgba(${swatches["DarkMuted"].getRgb()}, 0.8)`
+                songBox.style.boxShadow = `${swatches["DarkMuted"].getHex()} 0px 0px 20px 3px`
+
+
+                const trackProgress = document.getElementsByClassName("trackProgress")[0] 
+                trackProgress.style.backgroundColor = `rgba(${swatches["DarkMuted"].getRgb()}, 0.8)`
+                trackProgress.style.boxShadow = `${swatches["DarkMuted"].getHex()} 0px 0px 20px 3px`
+                
+                document.getElementsByClassName("progressBar")[0].style.backgroundColor = swatches["Vibrant"] ? swatches["Vibrant"].getHex() : swatches["LightVibrant"].getHex()
+
+                document.getElementsByClassName("metadata")[0].style.color = swatches["LightVibrant"] ? swatches["LightVibrant"].getHex() : swatches["Vibrant"].getHex()
+              })
+            }
+          }
+
+          const progress = new Date(result.progress_ms)
+          var pSeconds = String(progress.getSeconds()).padStart(2, 0)
+          $(".durationProgress").html(`${progress.getMinutes()}:${pSeconds}`)
+
+          // I alrd call for the duration here so too lazy to call it again on song change event
+          const duration = new Date(result.item.duration_ms)
+          var dSeconds = String(duration.getSeconds()).padStart(2, 0)
+
+          const left = new Date(duration-progress)
+          $(".duration").html(String(`-${left.getMinutes()}:${String(left.getSeconds()).padStart(2, 0)}`))
+
+          console.log(result.progress_ms / result.item.duration_ms)
+          document.getElementsByClassName("progressBar")[0].style.width = `${
+            (result.progress_ms / result.item.duration_ms) * 100
+          }%`
+        })
+      }, 1000)
+    </script>
+  </body>
+</html>

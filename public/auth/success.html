@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spicy SpotifyClient Web</title>
+    <link rel="stylesheet" href="../static/css/auth/success.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="box">
+        <h1>Sucessfully authorized</h1>
+        <p id="timer">redirecting to mainpage in 3s...</p>
+    </div>
+    <script>
+        var timer = document.getElementById("timer")
+        var left = 3
+        function countdown() {
+            if (left != 0) {
+                timer.innerHTML = `redirecting to mainpage in ${left}s...`
+                left -= 1
+                setTimeout("countdown()", 1000)
+            } else {
+                window.location.replace("/")
+            }
+        }
+
+        
+        countdown()
+    </script>
+</body>
+</html>

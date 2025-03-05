@@ -1,0 +1,61 @@
+const express = require('express')
+const app = express()
+const axios = require("axios")
+
+var clientID = "8bd1936208934a1b8060d5f03cc0b95a"
+var clientSecret = "4e6e59bc72204582974d04b52a46e76d"
+
+var accessToken = ""
+async function getToken() {
+    return axios.post(
+        'https://accounts.spotify.com/api/token',
+        new URLSearchParams({
+        'grant_type': 'client_credentials',
+        'client_id': clientID,
+        'client_secret': clientSecret
+        })
+    )
+}
+
+async function getPlayerState(accessToken) {
+    console.log(`Bearer ${accessToken}`)
+    const response = await axios.get(
+        "https://api.spotify.com/v1/me/player",
+        {
+            headers: {
+                "Authorization": `Bearer BQA_EKtzET1OO_5Uex_adnQRh3-0KLLzFzbQgh0ahSUUpxHxuej2MRw2JBtUUsIweaptm-bW0iIxh8OU7cuKyoDm7AhrhbyD5Qa6424gKElPlcZN5vVd3U5HeINFyM45NYF8-X5zhzY`
+            }
+        }
+    ).catch((error)=>{
+        console.log("SEXO", error)
+    })
+    return response
+}
+async function main() {
+    const xd = await getPlayerState("a")
+    console.log(xd)
+
+    /*const request = await getToken()
+    var accessToken = request.data.access_token
+
+    console.log(accessToken)
+
+    // Declares the HTML static code
+    app.use(express.static("public"))
+
+
+    // Declares the API Endpoints
+    app.get('/api', (req, res) => {
+        res.send('401')
+    })
+    app.get("/api/playerState", async (req, res) => {
+        const playerState = await getPlayerState(accessToken)
+        res.send(playerState)
+    })
+
+    app.listen(80, "0.0.0.0", () => {
+        console.log(`App running @ http://localhost:80`)
+    })*/
+}
+
+main()

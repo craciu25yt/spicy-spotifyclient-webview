@@ -1,0 +1,360 @@
+body {
+    background-color: black;
+    
+    color: white;
+    font-family: "Poppins", serif;
+    font-weight: 700;
+    width: 100%;
+    overflow: hidden;
+
+    user-select: none;
+}
+
+
+.background {
+    position: fixed;
+
+
+    right: 0;
+    top: 0;
+
+    height: 100%;
+    width: 100%;
+
+    background-image: url("../../dellafuente-cover.jpg");
+    background-position: center;
+    background-size: auto;
+    background-repeat: no-repeat;
+    filter: blur(10px) opacity(0.8);
+    
+    transition: all 1s ease-in-out;
+
+    z-index: -1;
+}
+
+#unAuthed {
+    position: absolute;
+    text-align: center;
+    top: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 15px;
+    color: rgb(255, 255, 255);
+    background-color: rgba(255, 0, 0, 0.582);
+    font-family: "Montserrat", serif;
+    border-radius: 0 0 10px 10px;
+}
+
+.queueBox {
+    position: absolute;
+
+    top: 2vh;
+    right: 2vh;
+
+    display: flex;
+    flex-direction: row;
+    position: absolute;
+    width: 30%;
+    background-color: rgba(0, 0, 0, 0.49);
+    border-radius: 10px;    
+    
+    z-index: 1;
+}
+.queueBox.show {
+    animation-name: slide-in;
+    animation-duration: 1s;
+    animation-timing-function: cubic-bezier(.19,.01,.4,1)
+}
+.queueBox.hide {
+    animation-name: slide-out;
+    animation-duration: 1s;
+    animation-timing-function: cubic-bezier(.19,.01,.4,1);
+}
+@keyframes slide-in {
+    from {
+      translate: 40vw 0;
+    }
+  
+    to {
+      translate: 0 0;
+    }
+}
+
+@keyframes slide-out {
+    from {
+      translate: 0 0;
+    }
+  
+    to {
+        translate: 40vw 0;
+    }
+}
+.queueBox .queueCover {
+    margin: 0.8vh;
+    width: 15%;
+    height: 15%;
+    border-radius: 10%;
+}
+.queueBox .queueMetadata {
+    padding-left: 1.5%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 1%;
+}
+.queueBox .queueTrackName {
+    font-size: 1.4em;
+    margin-bottom: 0px;
+}
+.queueBox  .queueArtists {
+    margin-top: 0;
+    margin-bottom: 0;
+
+    font-weight: 500;
+    font-size: 0.8em;
+    
+}
+
+.nextText {
+    top: 0;
+    right: 1%;
+    position: absolute;
+    font-size: 1.2em;
+    margin: 0;
+}
+
+@font-face {
+    font-family: "Spicy Lyrics";
+    src: url(../LyricsBold.woff2) format("woff2");
+}
+
+.lyricsBox {
+    top: 7vh;
+    right: 11%;
+    left: 11%;
+    padding: 10px;
+
+    height: 50vh;
+    
+    overflow: overlay;
+    
+
+    font-family: "Spicy Lyrics";
+    font-weight: 700;
+    font-size: 4.5vh;
+    
+    scroll-behavior: smooth;
+    
+    position: absolute;
+    background-color: rgb(97, 0, 0);
+}
+.lyricsBox::-webkit-scrollbar-thumb {
+    background-color: #9e9e9e;
+    
+    border-radius: 10px;
+}
+.lyricsBox::-webkit-scrollbar-button {
+    background-color: transparent;
+}
+.lyricsBox::-webkit-scrollbar {
+    width: 5px;
+    background-color: transparent;
+    padding: 40px;
+}
+/* Any line*/
+.lyrics .line {
+    word-wrap:break-word;
+    word-break:break-all;
+    
+    
+}
+
+.lyrics .word {
+    padding: .5px .75px;
+    background: -webkit-linear-gradient(left, rgba(255, 255, 255, 0.85) var(--gradient-progress), rgba(158, 158, 158, 0.85) calc(var(--gradient-progress) + 20%)); 
+    -webkit-background-clip: text;
+    background-clip: text; 
+}
+.lyrics .word:not(.PartOfWord)::after {
+    content: "";
+    margin: .3ch;
+}
+.lyrics .PartOfWord {
+}
+
+
+.lyrics .notSung {
+    text-shadow: 0 0 20px rgba(158, 158, 158, 0.85);
+    color: #9e9e9e;
+}
+
+.lyrics .sung {
+    text-shadow: 0 0 20px rgba(158, 158, 158, 0.85);
+    color: #9e9e9e;
+    
+}
+.lyrics .active {
+    color: transparent;
+    text-shadow: 0 0 20px #ffffff;
+    font-size: 5vh;
+    background: -webkit-linear-gradient(top, rgba(255, 255, 255, 0.85) var(--gradient-progress), rgba(158, 158, 158, 0.85) calc(var(--gradient-progress) + 20%)); 
+    
+    -webkit-background-clip: text;
+    background-clip: text; 
+}
+
+.lyrics .oppositeAligned {
+    text-align: right;
+}
+
+
+.mainBox {
+    margin-top: 80vh;
+    
+    transform: translateY(-50%);
+    margin-left: 10%;
+    margin-right: 10%;
+    /*background-color: rgba(0, 0, 0, 0.699);*/
+
+    border-color: white;
+    
+    border: 10px;
+    border-radius: 15px;
+    padding: 1%
+}
+
+.songBox {
+    display: flex;
+    flex-direction: row;
+    gap: .7cqw;
+
+    background-color: #5d719f;
+    padding: 1%;
+    border-radius: 15px;
+    
+    position:relative;   
+
+    box-shadow: 0px 0px 10vh #5d719f;
+    
+}
+
+.songBox .metadata {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    bottom: 1%;
+    left: 15%;
+    padding-left: 1.5%;
+    color:rgb(255, 255, 255);
+}
+
+
+.songBox .coverContainer {
+    width: 14%;
+    height: 15%;
+    position: relative;
+}
+
+.songBox .cover {
+    width: 100%;
+    height: 100%;
+
+    position: relative;
+    border-radius: 10px;
+    
+    z-index: 1;
+    
+    -webkit-user-drag: none;
+}
+
+.songBox .coverMask {
+
+    width: 110%;    
+    
+    top: -5%;
+    left: -5%;
+
+    position: absolute;
+    background-image: url("http://localhost/flore.jpg");
+    background-size: 100%;
+    background-repeat: no-repeat;
+    border-radius: 10px;
+
+    filter: blur(25px) saturate(1);
+
+    
+    -webkit-user-drag: none;   
+}
+
+.trackProgress {
+    display: flex;
+        
+    text-align: right;
+    background-color: #5d719f;
+    border-radius: 15px;
+    margin-top: 10px
+    
+}
+
+.trackProgress .durationProgress {
+    font-size: 1.2em;
+    margin: 0;
+    padding: 0;
+    margin-top: 4px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.trackProgress .predictedProgress {
+    font-size: 1.2em;
+    margin: 0;
+    padding: 0;
+    margin-top: 4px;
+    margin-right: 10px;
+}
+.trackProgress .duration {
+    font-size: 1.2em;
+    margin: 0;
+    
+
+    margin-right: 10px;
+    margin-left: 10px;
+
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-family: "Open Sans", serif;
+    font-weight: 700;
+}
+.trackProgress .progressBarContainer {
+    width: 100%;
+    position: relative;
+    
+    margin-top: 10px;
+    margin-bottom: 10px;
+    /*margin-top: 10px;*/
+    
+    
+}
+.trackProgress .progressBar {
+    width: 100%;
+    height: 15px;
+    background-color: #785a24;
+    border-radius: 10px;
+    transition: width 0.25s ease-in-out;
+    /*border: 1px solid rgba(255, 255, 255, 0.514);*/
+}
+
+.trackName {
+    margin-bottom: 0px;
+}
+.artists {
+    
+    font-weight: 500;
+    font-size: 1.2em;
+    margin-top: 0px;
+    /*filter: drop-shadow(0 0 0.75rem rgb(255, 217, 0));* if dellafuente*/
+}
+
+.predictedProgress {
+    position: absolute;
+    bottom: -1vh
+}

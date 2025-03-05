@@ -1,0 +1,4 @@
+equip 4 - blau
+equip 3 - verd
+equip 2 - groc
+equip 1 - vermell

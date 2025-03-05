@@ -1,0 +1,10 @@
+body {
+    background-color: black;
+    color: white;
+    font-family: "Open Sans", serif;
+}
+
+.box {
+    margin-top: 5vh;
+    text-align: center;
+}

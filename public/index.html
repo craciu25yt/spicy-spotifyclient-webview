@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spicy SpotifyClient Web</title>
+    <link rel="stylesheet" href="static/css/index.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link 
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:wght@700&display=swap"
+    rel="stylesheet"
+    >
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.2/jquery.min.js"
+      integrity="sha512-tWHlutFnuG0C6nQRlpvrEhE4QpkG1nn2MOUMWmUeRePl4e3Aki0VB6W1v3oLjFtd0hVOtRQ9PHpSfN6u6/QXkQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+
+    <script src="./static/Vibrant.js"></script>
+  </head>
+  <body>
+    <div class="background"></div>
+    <div id="unAuthed">You are not authed!</div>
+    <div class="queueBox" style="display: none">
+      <img src="/antes.jpg" class="queueCover" crossorigin="anonymous" />
+      <div class="queueMetadata">
+        <h1 class="queueTrackName">Antes</h1>
+        <h1 class="queueArtists">RVFV</h1> 
+        <h1 class="nextText">NEXT UP</h1>
+      </div>
+    </div>
+    <div class="lyricsBox">
+      <div class="lyrics"></div>
+    </div>
+    <div class="mainBox">
+      <div class="songBox">
+        <div class="coverContainer">
+          <img src="http://localhost/flore.jpg" class="cover" crossorigin="anonymous" />
+          <img src="http://localhost/flore.jpg" class="coverMask" crossorigin="anonymous">
+        </div>
+        <div class="metadata">
+          <h1 class="trackName">Flores Pa Tu Pelo</h1>
+          <h1 class="artists">Dellafuente</h1>
+        </div>
+      </div>
+      <div class="trackProgress">
+        <h1 class="durationProgress">0:00</h1>
+        <h1 class="predictedProgress">0:00</h1>
+        <div class="progressBarContainer">
+          <div class="progressBar"></div>
+        </div>
+        <button class="duration" onclick="toggleCountdown()">3:21</button>
+      </div>
+    </div>
+
+    <script>
+      //Todo: do a crazy ass animation when the song changes
+      let currentSong = ""
+
+      let currentlyPlaying = false
+
+      let currentLyrics
+      let nextSong
+
+      let colorPallete
+
+      let durationCountdown = false
+      
+      let lastProgress // Current progess
+      let lastProgressMs // Current progress in ms
+      let lastProgressDate // Datetime of last update
+
+      let lastDuration // Full song duration
+      let lastDurationMs // Full song duration in ms
+      
+      let predictedProgress = 1000 // Predicted time by prediction routine
+      
+      let lastUpdate
+
+      let isShowingQueue = false
+
+      let lastLyricsLine = 0
+
+      let memeRequest = new XMLHttpRequest()
+      memeRequest.open("GET", "/memeArtistsNames.json", false)
+      memeRequest.send()
+
+      const memeArtistsNames = JSON.parse(memeRequest.responseText)
+      let apiLatency
+      
+      function toggleCountdown() {
+        if (durationCountdown) {
+          durationCountdown = false
+          
+          $(".duration").html(String(` ${lastDuration.getMinutes()}:${padStart(lastDuration.getSeconds())}`))
+          return
+        }
+        
+        const left = new Date(lastDuration-lastProgress)
+        $(".duration").html(String(`-${left.getMinutes()}:${padStart(left.getSeconds())}`))
+        durationCountdown = true
+      }
+
+      // Refresh routine
+      setInterval(async () => {
+        
+        const req = await $.ajax({
+          url: "/api/playerState",
+          method: "GET",
+        }) 
+        const result = req.data
+        if (!apiLatency) apiLatency = new Date().getTime() - req.sentAt 
+        lastUpdate = req.lastUpdate
+        //console.log("TIME  SINCE LAST REQUEST", result)
+        if (req == "No authorization found") {
+          $("#unAuthed").show()
+          return
+        }
+        $("#unAuthed").hide()
+        if (result.item == null || !result.is_playing) {
+          currentlyPlaying = false
+          return
+        }
+        currentlyPlaying = true
+
+
+        // This shouldn't  change the album id though
+        if (currentSong != result.item.album.id) {
+          console.log("Song changed!")
+
+          currentSong = result.item.album.id
+          
+          
+          $(".trackName").text(result.item.name)
+
+          var artists = document.getElementsByClassName("artists")[0]
+          artists.innerHTML = ""
+          for (const artist of result.item.artists) {
+            const span = document.createElement("span")
+            
+            artistName = artist.name
+
+            if (memeArtistsNames.hasOwnProperty(artistName)) {
+              // Load custom CSS
+              for (const key in memeArtistsNames[artistName].style) {
+                span.style[key] = memeArtistsNames[artistName].style[key]
+              }
+              artistName = memeArtistsNames[artistName].name
+            }
+            if (artists.innerHTML == "") {
+              span.textContent = artistName
+              artists.appendChild(span)
+              continue
+            }
+
+            span.textContent = ", " + artistName
+            artists.appendChild(span)
+          }
+
+          console.log("Album cover", result.item.album.images[0].url)
+
+          const canva = document.getElementsByClassName("cover")[0]
+          canva.src = result.item.album.images[0].url
+          document.getElementsByClassName("coverMask")[0].src = result.item.album.images[0].url
+
+          // Banner check
+          for (const artist in result.item.artists) {
+            const r = await $.get(`/api/getArtistBanner?ArtistURI=${result.item.artists[artist].uri}&TrackURI=${result.item.uri}`)
+            console.log("Checking for banner", r, result.item.artists[artist].uri)
+            if (r != "Artist doesn't have a banner") {
+              console.log("All fine", r)
+              document.getElementsByClassName("background")[0].style.backgroundImage = `url(${r})`
+              break
+            }
+            if (artist == result.item.artists.length-1) {
+                console.log("NO BANNER FOUND XD")
+                continue
+            }
+            console.log(result.item.artists[artist].name, "didn't had a banner. checking for", result.item.artists[Number(artist)+1].name)
+          }
+          
+
+          if (canva.complete) {
+            changeCanva(canva)
+          } else {
+            canva.addEventListener("load", function () {
+              console.log("Color delayed")
+              changeCanva(canva)
+            })
+          }
+
+          const r = await $.get(`/api/getLyrics?TrackURI=${result.item.uri}`)  // spotify:track:0uB9gsssuj6l3XLi25ADYl gracias judeline por ayudarme xd
+
+          if (r.error) {
+            currentLyrics = undefined
+            hideLyrics()
+            console.log(r.error)
+            return
+          }
+          var data = r
+
+          if (typeof data == "string") {
+            data = JSON.parse(data)
+          }
+          
+          showLyrics()
+          // Parse it because spicy lyrics retruns it with scaped quotes
+          console.log(data)
+          currentLyrics = data
+          lastLyricsLine = 0
+          const lyricsElement = await document.querySelector(".lyrics")
+          
+          while (lyricsElement.firstChild) {
+              lyricsElement.firstChild.className = ""
+              lyricsElement.removeChild(lyricsElement.firstChild);
+          }
+          lyricsElement.innerHTML = ""
+
+          if (data.Type == "Syllable") {
+            for (const line of data.Content) {
+              const div = document.createElement("div")
+              //console.log(line)
+              for (const syllable of line.Lead.Syllables) {
+                const syllableElement = document.createElement("span")
+                const $syllableElement = $(syllableElement)
+                syllableElement.textContent = syllable.Text
+                syllableElement.classList = "word"
+                syllableElement.style.setProperty("--gradient-progress", `-20%`)
+                //
+                
+                //syllableElement.style.backgroundClip = "text"
+                if (syllable.IsPartOfWord) {
+                  $syllableElement.addClass("PartOfWord")
+                }
+                div.appendChild(syllableElement)
+                //console.log(syllableElement)
+              }
+              //div.style.backgroundClip = "text"
+              div.className = "line notSung"
+              if (line.OppositeAligned) {
+                div.className = "line notSung oppositeAligned"
+              }
+              document.getElementsByClassName("lyrics")[0].appendChild(div)
+          }
+          return
+          }
+          for (const line of data.Content) {
+            console.log(line)
+            const div = document.createElement("div")
+            div.textContent = line.Text
+            div.className = "line notSung"
+            console.log(line.OppositeAligned)
+            if (line.OppositeAligned) {
+              div.className = "line notSung oppositeAligned"
+            }
+            document.getElementsByClassName("lyrics")[0].appendChild(div)
+          }
+          document.getElementsByClassName("lyricsBox")[0].scrollTo({
+            top: 0,
+            behavior: "smooth",
+          })
+        }
+        //lyrics(result.progress_ms/1000)
+        const progress = new Date(result.progress_ms)
+        $(".durationProgress").html(`${progress.getMinutes()}:${padStart(progress.getSeconds())}`)
+
+
+        // I alrd call for the duration here so too lazy to call it again on song change event
+        const duration = new Date(result.item.duration_ms)
+        lastDuration = duration
+        lastDurationMs = result.item.duration_ms
+
+        lastProgress = progress
+        lastProgressMs = result.progress_ms
+        lastProgressDate = new Date()
+
+        if (durationCountdown) {
+          const left = new Date(duration-progress)
+          $(".duration").html(String(`-${left.getMinutes()}:${padStart(left.getSeconds())}`))
+        } else {
+          $(".duration").html(String(` ${duration.getMinutes()}:${padStart(duration.getSeconds())}`))
+        }
+      
+        document.getElementsByClassName("progressBar")[0].style.width = `${
+          (result.progress_ms / result.item.duration_ms) * 100
+        }%`
+
+        if (duration-progress < 45000 && nextSong) {
+          isShowingQueue = true
+
+          $(".queueBox").show()
+          $(".queueBox").addClass("show")
+
+          $(".queueTrackName").html(nextSong.name)
+
+          var artists = ""
+          for (const artist of nextSong.artists) {
+            if (artists == "") {
+              artists = artist.name
+              continue
+            }
+            artists = artists + ", " + artist.name
+          }
+
+          $(".queueArtists").html(artists)
+          $(".queueCover").attr("src", nextSong.album.images[0].url)
+
+          } else if (isShowingQueue) {
+            isShowingQueue = false
+            $(".queueBox").removeClass("show")
+            $(".queueBox").addClass("hide")
+            setTimeout(() => {
+              
+              $(".queueBox").removeClass("hide")
+              $(".queueBox").hide()
+            }, 1000)
+            
+          }
+        //console.log("Timings:", predictedProgress, lastProgressMs, Math.abs(predictedProgress - progress), "time since request", new Date().getTime() - req.lastUpdate)
+        
+      }, 1000)
+      // TODO: Update "sung" lyrics when the song timeline is changed
+
+      // Lyrics Update routune
+      const $predictedProgress = $(".predictedProgress")
+      setInterval(async () => {
+        if (!currentLyrics) return
+        
+        progress = predictedProgress/1000
+        $predictedProgress.html(String(progress))
+
+        if (currentLyrics.Type == "Syllable") {
+          for (const [index, line] of currentLyrics.Content.entries()) {
+            const div = document.getElementsByClassName("line")[index]
+            //if (div.className == "line sung") continue
+            
+            if (line.Lead.StartTime <= progress && line.Lead.EndTime >= progress) {
+              if (1 != index - lastLyricsLine) {
+                //scrollTo(div.offsetTop)
+                const lyricsBox = document.getElementsByClassName("lyricsBox")[0]
+                lyricsBox.scrollTop = div.offsetTop - (lyricsBox.clientHeight / 2 )
+                $(".line").eq(index).addClass("active") 
+                console.log("Scrolled to", div.offsetTop)
+              }
+
+            lastLyricsLine = index-1
+              for (const [sIndex, syllable] of line.Lead.Syllables.entries()) {
+                if (syllable.StartTime > progress || syllable.EndTime < progress) continue
+                // Get the syllable element
+                const syllableElement = div.childNodes[sIndex]
+                //console.log((progress-syllable.StartTime), (syllable.EndTime-syllable.StartTime), progress, syllable.EndTime, syllable.StartTime)
+                syllableElement.style.setProperty("--gradient-progress", `${Math.floor((progress-syllable.StartTime)/(syllable.EndTime-syllable.StartTime)*100)}%`)
+              }
+
+            
+            } else {
+              const lastLine = $(".line").eq(index)
+              
+              if (index <= lastLyricsLine) {
+                if (lastLine.hasClass("notSung")) {
+                  
+                console.log("DECLARED SUNG")
+                  lastLine.addClass("sung")
+                  lastLine.removeClass("notSung")
+                }
+              } else {
+                lastLine.addClass("notSung")
+              }
+              lastLine.removeClass("active")
+
+            }
+          }    
+          return
+        }
+        for (const [index, line] of currentLyrics.Content.entries()) {
+
+          if (line.StartTime <= progress && line.EndTime >= progress) {
+            //console.log(line.Text, index, progress, line.StartTime, line.EndTime, lastProgressMs/1000)
+            const div = document.getElementsByClassName("line")[index]
+            if (1 != index - lastLyricsLine) {
+                //scrollTo(div.offsetTop)
+                const lyricsBox = document.getElementsByClassName("lyricsBox")[0]
+                lyricsBox.scrollTop = div.offsetTop - (lyricsBox.clientHeight / 2 )
+                $(".line").eq(index).addClass("active") 
+                console.log("Scrolled to", div.offsetTop)
+              }
+
+            lastLyricsLine = index-1
+            
+            //div.style.setProperty()
+            document.getElementsByClassName("line")[index].style.setProperty("--gradient-progress", `${Math.floor((progress-line.StartTime)/(line.EndTime-line.StartTime)*100)}%`)
+            //document.getElementsByClassName("line")[index].stlye["-webkit-background-clip"] = "text"
+            //document.getElementsByClassName("line")[index].backgroundClip = "text"
+            if (line.className == "line active" || line.className == "line sung") return
+
+            
+            
+            //div.className = "line active"
+
+            //return
+
+          } else {
+            const lastLine = $(".line").eq(index)
+            lastLine.addClass("sung")
+            lastLine.removeClass("active")
+            lastLine.removeClass("notSung")
+            
+          }
+          
+        }
+        
+      }, 50)
+
+      // queue routine
+      setInterval(async () => {
+        const req = await $.get("/api/queue")
+        nextSong = req.queue[0]
+      }, 5000)
+
+      async function scrollTo(top) {
+
+        const lyricsBox = document.getElementsByClassName("lyricsBox")[0]
+
+        const startTime = performance.now()
+        const duration = 500
+        const distance = (top - (lyricsBox.clientHeight / 2)) - top
+        const startScrollTop = top
+        function scroll(time) {
+          const elapsedTime = time - startTime
+          //console.log(elapsedTime)
+          const progress = Math.min(elapsedTime / duration, 1)
+          const easing = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2
+          //console.log(time, top, distance * easing, progress)
+          //console.log(distance * easing)
+          lyricsBox.scrollTop = top - (lyricsBox.clientHeight / 2 )//(top - (lyricsBox.clientHeight)) - distance * easing 
+          //(top + distance * easing)
+          //lyricsBox.scrollTo({
+          //    top: div.offsetTop - (lyricsBox.clientHeight / 2),
+          //    behavior: "smooth"
+          //  })
+
+          if (progress < 1) { 
+            requestAnimationFrame(scroll)
+          }
+
+        }
+        requestAnimationFrame(scroll)
+        
+      }
+      
+      // Timestamp prediction routine
+      const trackName = document.querySelector(".trackName")
+      setInterval(async () => {
+        if (!currentlyPlaying) return
+        //trackName.textContent = (Math.abs((predictedProgress - (new Date()-lastProgressDate)) - lastProgressMs))
+        
+        //console.log(((predictedProgress - (new Date()-lastProgressDate)) - lastProgressMs))
+        /*if (Math.abs((predictedProgress - (new Date()-lastProgressDate)) - lastProgressMs)  > 1300) {
+          
+        //console.log("COJO UNA MANSAN",(predictedProgress - (new Date()-lastProgressDate)), lastProgressMs)
+          trackName.textContent = "RESYNCED" + Math.random() +" " +  apiLatency + " " + ((predictedProgress - (new Date()-lastProgressDate)) - lastProgressMs)
+         
+          //console.log(predictedProgress, lastProgressMs)
+          //console.log((predictedProgress - (new Date()-lastProgressDate)) - lastProgressMs, (predictedProgress - lastProgressMs), ((new Date().getTime() - lastUpdate)))
+          //console.log(((new Date().getTime() - lastUpdate)))
+          
+          // Thanks samsung for not syncinc the fucking time
+          if (navigator.userAgent.includes("SamsungBrowser")) {
+              //trackName.textContent = "RESYNCED SAMSUNG"
+          predictedProgress = lastProgressMs  + ((new Date().getTime() - lastUpdate)) + Math.abs(apiLatency)
+          } else {
+            console.log("Time desynced", predictedProgress - lastProgressMs, predictedProgress - lastProgressMs + (new Date() - lastProgressDate))
+          predictedProgress = lastProgressMs  + ((new Date().getTime() - lastUpdate))
+          }
+          
+        
+        }*/
+        //console.log((predictedProgress - (new Date()-lastProgressDate)) - lastProgressMs, predictedProgress)
+        
+        predictedProgress = lastProgressMs  + ((new Date().getTime() - lastUpdate)) + Math.abs(apiLatency)
+        console.log(predictedProgress, lastProgressMs, apiLatency, new Date().getTime() - lastUpdate)
+
+
+      }, 50)
+
+      
+      async function hideLyrics() {
+        document.getElementsByClassName("lyricsBox")[0].style.display = "none"
+        document.getElementsByClassName("mainBox")[0].style.marginTop = "50vh"
+        return
+      }
+      async function showLyrics() {
+        document.getElementsByClassName("lyricsBox")[0].style.display = "block"
+        document.getElementsByClassName("mainBox")[0].style.marginTop = "80vh"
+        return
+      }
+      async function changeCanva(canva) {
+        const vibrant = new Vibrant(canva, 32, 1)
+        const swatches = vibrant.swatches()
+        for (const [key, value] of Object.entries(swatches)) {
+            console.log(key, value)
+        }
+        const songBox = document.getElementsByClassName("songBox")[0]
+        songBox.style.backgroundColor = `rgba(${swatches["DarkMuted"] != undefined ? swatches["DarkMuted"].getRgb() : "#000000"}, 0.8)`
+        songBox.style.boxShadow = `${swatches["DarkMuted"].getHex()} 0px 0px 20px 3px`
+
+        const trackProgress = document.getElementsByClassName("trackProgress")[0] 
+        trackProgress.style.backgroundColor = `rgba(${swatches["DarkMuted"].getRgb()}, 0.8)`
+        trackProgress.style.boxShadow = `${swatches["DarkMuted"].getHex()} 0px 0px 20px 3px`
+        
+        const lyricsBox = document.getElementsByClassName("lyricsBox")[0]
+        lyricsBox.style.backgroundColor = `rgba(${swatches["DarkMuted"].getRgb()}, 0.8)`
+        lyricsBox.style.boxShadow = `${swatches["DarkMuted"].getHex()} 0px 0px 20px 3px`
+
+        document.getElementsByClassName("progressBar")[0].style.backgroundColor = swatches["Vibrant"] ? swatches["Vibrant"].getHex() : swatches["LightVibrant"].getHex()
+        document.getElementsByClassName("metadata")[0].style.color = swatches["LightVibrant"] ? swatches["LightVibrant"].getHex() : swatches["Vibrant"].getHex()
+      }
+      
+      // Adds compatibility for older browsers that don't support padStart (My samsung TV)
+      function padStart(number) {
+        if (number < 10) {
+          return "0" + number
+        }
+        return number
+      }
+    </script>
+  </body>
+</html>

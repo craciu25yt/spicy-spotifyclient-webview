@@ -1,0 +1,45 @@
+{
+    "DELLAFUENTE": {
+        "name": "DELLAFUENTE ⛲",
+        "style": {
+            "textShadow": "0 0 0.75rem rgb(255, 217, 0)"
+        }
+    },
+    "Sean Paul": {
+        "name": "Sean W. Paul"
+    },
+    "Judeline": {
+        "name": "Judelain",
+        "style": {
+            "textShadow": "0 0 0.75rem rgb(255, 0, 0)"
+        }
+    },
+    "Bad Bunny": {
+        "name": "Conejo malo 🐰",
+        "style": {
+            "textShadow": "#d3901b 0px 0px 20px"
+        }
+    },
+    "El Alfa": {
+        "name": "El Animal El Criminal The Best",
+        "style": {
+            "textShadow": "0 0 0.75rem rgb(255, 217, 0)"
+        }
+    },
+    "Dib": {
+        "name": "<div>"
+        
+    },
+    "rickyedit": {
+        "name": "rickyedit 🕶",
+        "style":{
+            "textShadow": "rgb(0 0 0) 0px 0px 1rem"
+        }
+    },
+    "Daddy Yankee": {
+        "name": "Mi padre es un Yonki 💉",
+        "style": {
+            "textShadow": "0 0 0.75rem rgb(255, 0, 0)"
+        }
+    }
+}
