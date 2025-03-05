@@ -5,5 +5,5 @@ I basically made this to be able to use it at my TV. This prob won't get any upd
 
 To make it work fill the .env, access to the auth login `localhost/auth/login` (or your local ip address) and you are ready to go
 
-[!IMPORTANT]
+[!CAUTION]
 This code contains vulnerabilities. Only use it on private networks.
